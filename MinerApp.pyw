@@ -141,9 +141,7 @@ class MinerApp:
         self.xmrstartbutton.config(command=lambda: None, background="#00FF00")
         self.xmrframe.configure(style="running.TFrame")
         self.xmrstopbutton.config(command=lambda: threading.Thread(target=self.stopxmr).start(), bg="#FF0000", relief="raised")
-        monerod_path = r"C:\Program Files\Monero GUI Wallet\monerod.exe"
-        p2pool_path = r"C:\Program Files\Monero GUI Wallet\p2pool\p2pool.exe"
-        xmrig_path = r"D:\Scripts\MinerApp\data\xmrig-6.24.0\xmrig.exe"
+        xmrig_path = os.path.join(self.datadir, "xmrig-6.24.0", "xmrig.exe")
         self.monerod = subprocess.Popen([
             self.monerod_path,
             "--prune-blockchain",
@@ -187,7 +185,7 @@ class MinerApp:
             "-o", f"{self.xmrpool1}",
             "-u", f"{self.xmraddress}",
             "-o", f"{self.xmrpool2}",
-            "-u", f"{self.xmraddress2}",
+            "-u", f"{self.xmraddress}",
             "--cpu-affinity=0xFFFF",
             "-t", "16",
             "--randomx-init=16",
