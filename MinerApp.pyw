@@ -83,30 +83,20 @@ class MinerApp:
         self.rvnstartbutton.config(command=lambda: None, background="#00FF00")
         self.rvnframe.configure(style="running.TFrame")
         self.rvnstopbutton.config(bg="#FF0000", command=lambda: threading.Thread(target=self.stoprvn).start(), relief="raised")
-        gminer_path = os.path.join(self.datadir, "gminer_3_41_windows64", "miner.exe")
+        srbminer_path = os.path.join(self.datadir, "SRBMiner-Multi-3-2-0", "SRBMiner-MULTI.exe")
         keyboard.press_and_release('alt+shift+F10')
         os.system("taskkill /f /im MSIAfterburner.exe")
-        self.gminer = subprocess.Popen([
-            gminer_path,
+        self.srbminer = subprocess.Popen([
+            srbminer_path,
             "-a", "kawpow",
-            "--ssl", "1",
-            "-s", f"{self.rvnpool1}",
+            "-o", f"{self.rvnpool1}",
             "-u", f"{self.rvnaddress}",
             "-p", f"{self.rvnpass1}",
-            "--ssl", "1",
-            "-s", f"{self.rvnpool2}",
-            "-u", f"{self.rvnaddress}",
-            "-p", f"{self.rvnpass2}",
-            "--tfan", "52",
-            "--tfan_min", "40",
-            "--tfan_max", "65",
-            "--lock_cclock", "1695",
-            "--cclock", "195",
-            "--mclock", "200",
-            "--pl", "75",
-            "--report_interval", "3600",
-            "--log_newjob", "0",
-            "--api", "10050"
+            "--api-enable",
+            "--api-port", "10050",
+            "--gpu-coffset0", "300",
+            "--gpu-moffset0", "2000",
+            "--gpu-plimit0", "250"
         ], creationflags=subprocess.CREATE_NEW_CONSOLE)
         time.sleep(1)
         keyboard.press("win+right")
@@ -119,9 +109,9 @@ class MinerApp:
         time.sleep(0.1)
         self.fans(0, f"{self.fanprofilemining}")
         self.running += 1
-        self.gminerrunning = True
+        self.srbminerrunning = True
         time.sleep(30)
-        wb.open_new_tab("http://127.0.0.1:10050")
+        wb.open_new_tab("http://127.0.0.1:10050/stats")
         time.sleep(1)
         wb.open_new_tab(f"{self.rvntab}")
 
@@ -129,11 +119,11 @@ class MinerApp:
         self.rvnstartbutton.config(command=lambda: threading.Thread(target=self.rvn).start(), background="#202020")
         self.rvnframe.configure(style="TFrame")
         self.rvnstopbutton.config(command=None, bg="#720000", relief="sunken")
-        subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.gminer.pid)])
+        subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.srbminer.pid)])
         os.startfile("C:\\Program Files (x86)\\MSI Afterburner\\MSIAfterburner.exe")
         keyboard.press_and_release('alt+shift+F10')
         self.running -= 1
-        self.gminerrunning = False
+        self.srbminerrunning = False
         if self.running == 0:
             self.fans(0, f"{self.fanprofiledefault}")
 
@@ -198,7 +188,7 @@ class MinerApp:
         time.sleep(0.1)
         keyboard.release("right")
         time.sleep(0.1)
-        if self.gminerrunning:
+        if self.srbminerrunning:
             keyboard.press("down")
             time.sleep(0.1)
             keyboard.release("win+down")
