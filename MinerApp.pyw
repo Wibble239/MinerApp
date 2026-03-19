@@ -21,7 +21,7 @@ class MinerApp:
     def __init__(self):
 
         self.running = 0
-        self.gminerrunning = False
+        self.gpurunning = False
         self.xmrigrunning = False
 
         self.rvnaddress = "RAVEN ADDRESS.NAME" #Ravencoin wallet address with worker name
@@ -30,6 +30,10 @@ class MinerApp:
         self.rvnpool2 = "Pool URL" #Ravencoin pool URL
         self.rvnpass2 = "Pool 2 password" #Ravencoin pool password
         self.rvntab = "URL for pool dashboard" #URL for pool dashboard to open after starting miner
+
+        self.cfxaddress = "CONFLUX ADDRESS.NAME" #Conflux wallet address with worker name
+        self.cfxpool = "Pool URL" #Conflux pool URL
+        self.cfxtab = "URL for pool dashboard" #URL for pool dashboard to open after starting miner
 
         self.xmraddress = "MONERO ADDRESS" #Monero wallet address
         self.xmrpool1 = "Pool URL" #Monero pool URL
@@ -56,8 +60,8 @@ class MinerApp:
 
         self.individual = ttk.Frame(self.root, style="TFrame")
         self.individual.grid(row=0, column=0)
-        self.rvnframe = ttk.Frame(self.individual, style="TFrame")
-        self.rvnframe.grid(row=0, column=0)
+        self.gpuframe = ttk.Frame(self.individual, style="TFrame")
+        self.gpuframe.grid(row=0, column=0)
         self.xmrframe = ttk.Frame(self.individual, style="TFrame")
         self.xmrframe.grid(row=1, column=0)
         self.all = ttk.Frame(self.root, style="TFrame")
@@ -67,22 +71,24 @@ class MinerApp:
         self.datadir = os.path.join(scriptdir, "data")
         rvnlogopath = os.path.join(self.datadir, "rvn.png")
         self.rvnlogo = ImageTk.PhotoImage(file=rvnlogopath)
+        cfxlogopath = os.path.join(self.datadir, "cfx.png")
+        self.cfxlogo = ImageTk.PhotoImage(file=cfxlogopath)
         xmrlogopath = os.path.join(self.datadir, "xmr.png")
         self.xmrlogo = ImageTk.PhotoImage(file=xmrlogopath)
 
-        self.rvnstartbutton = tk.Button(self.rvnframe, image=self.rvnlogo, text="Start RVN Miner", command=lambda: threading.Thread(target=self.rvn).start(), background="#202020", border=0)
-        self.rvnstartbutton.grid(row=0, column=0)
-        self.rvnstopbutton = tk.Button(self.individual, text="Stop RVN", command=lambda: None, width=8, height=3, bg="#720000", fg="#FFFFFF", font=("Arial", 50, "bold"), relief="sunken")
-        self.rvnstopbutton.grid(row=0, column=1, padx=10, pady=10)
+        self.gpustartbutton = tk.Button(self.gpuframe, image=self.rvnlogo, text="Start RVN Miner", command=lambda: threading.Thread(target=self.rvn).start(), background="#202020", border=0)
+        self.gpustartbutton.grid(row=0, column=0)
+        self.gpustopbutton = tk.Button(self.individual, text="Stop GPU", command=lambda: None, width=8, height=3, bg="#720000", fg="#FFFFFF", font=("Arial", 50, "bold"), relief="sunken")
+        self.gpustopbutton.grid(row=0, column=1, padx=10, pady=10)
         self.xmrstartbutton = tk.Button(self.xmrframe, image=self.xmrlogo, text="Start XMR Miner", command=lambda: threading.Thread(target=self.xmr).start(), background="#202020", border=0)
         self.xmrstartbutton.grid(row=1, column=0)
         self.xmrstopbutton = tk.Button(self.individual, text="Stop XMR", command=lambda: threading.Thread(target=self.stopxmr).start(), width=8, height=3, bg="#720000", fg="#FFFFFF", font=("Arial", 50, "bold"), relief="flat")
         self.xmrstopbutton.grid(row=1, column=1, padx=10, pady=10)
 
     def rvn(self):
-        self.rvnstartbutton.config(command=lambda: None, background="#00FF00")
-        self.rvnframe.configure(style="running.TFrame")
-        self.rvnstopbutton.config(bg="#FF0000", command=lambda: threading.Thread(target=self.stoprvn).start(), relief="raised")
+        self.gpustartbutton.config(command=lambda: None, background="#00FF00")
+        self.gpuframe.configure(style="running.TFrame")
+        self.gpustopbutton.config(bg="#FF0000", command=lambda: threading.Thread(target=self.stoprvn).start(), relief="raised")
         srbminer_path = os.path.join(self.datadir, "SRBMiner-Multi-3-2-0", "SRBMiner-MULTI.exe")
         keyboard.press_and_release('alt+shift+F10')
         os.system("taskkill /f /im MSIAfterburner.exe")
@@ -94,9 +100,58 @@ class MinerApp:
             "-p", f"{self.rvnpass1}",
             "--api-enable",
             "--api-port", "10050",
-            "--gpu-coffset0", "300",
-            "--gpu-moffset0", "2000",
-            "--gpu-plimit0", "250"
+            #"--gpu-intensity", "24",
+            "--gpu-coffset0", "150",
+            "--gpu-moffset0", "1000",
+            "--gpu-plimit0", "250",
+            "--log-file-mode", "2"
+        ], creationflags=subprocess.CREATE_NEW_CONSOLE) # Stock 51.72MH/s 150/1000 52.28MH/s 300/2000 52.25MH/s
+        time.sleep(1)
+        keyboard.press("win+right")
+        time.sleep(0.1)
+        keyboard.release("right")
+        time.sleep(0.1)
+        keyboard.press("up")
+        time.sleep(0.1)
+        keyboard.release("win+up")
+        time.sleep(0.1)
+        self.fans(0, f"{self.fanprofilemining}")
+        self.running += 1
+        self.gpurunning = True
+        time.sleep(30)
+        wb.open_new_tab("http://127.0.0.1:10050/stats")
+        time.sleep(1)
+        wb.open_new_tab(f"{self.rvntab}")
+
+    def stoprvn(self):
+        self.gpustartbutton.config(command=lambda: threading.Thread(target=self.rvn).start(), background="#202020")
+        self.gpuframe.configure(style="TFrame")
+        self.gpustopbutton.config(command=None, bg="#720000", relief="sunken")
+        subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.srbminer.pid)])
+        os.startfile("C:\\Program Files (x86)\\MSI Afterburner\\MSIAfterburner.exe")
+        keyboard.press_and_release('alt+shift+F10')
+        self.running -= 1
+        self.gpurunning = False
+        if self.running == 0:
+            self.fans(0, f"{self.fanprofiledefault}")
+
+    def cfx(self):
+        self.gpustartbutton.config(command=lambda: None, background="#00FF00")
+        self.gpuframe.configure(style="running.TFrame")
+        self.gpustopbutton.config(bg="#FF0000", command=lambda: threading.Thread(target=self.stopcfx).start(), relief="raised")
+        lolminer_path = os.path.join(self.datadir, "lolMiner_v1.98a_Win64", "lolMiner.exe")
+        keyboard.press_and_release('alt+shift+F10')
+        os.system("taskkill /f /im MSIAfterburner.exe")
+        self.lolminer = subprocess.Popen([
+            lolminer_path,
+            "--algo", "OCTOPUS",
+            "--pool", f"{self.cfxpool}",
+            "--user", f"{self.cfxaddress}",
+            "--coff", "150",
+            "--moff", "1000",
+            "--pl", "250",
+            "--apiport", "10050",
+            "--silence", "1"
         ], creationflags=subprocess.CREATE_NEW_CONSOLE)
         time.sleep(1)
         keyboard.press("win+right")
@@ -109,21 +164,21 @@ class MinerApp:
         time.sleep(0.1)
         self.fans(0, f"{self.fanprofilemining}")
         self.running += 1
-        self.srbminerrunning = True
+        self.gpurunning = True
         time.sleep(30)
-        wb.open_new_tab("http://127.0.0.1:10050/stats")
+        wb.open_new_tab("http://127.0.0.1:10050/gui")
         time.sleep(1)
-        wb.open_new_tab(f"{self.rvntab}")
+        wb.open_new_tab(f"{self.cfxtab}")
 
-    def stoprvn(self):
-        self.rvnstartbutton.config(command=lambda: threading.Thread(target=self.rvn).start(), background="#202020")
-        self.rvnframe.configure(style="TFrame")
-        self.rvnstopbutton.config(command=None, bg="#720000", relief="sunken")
-        subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.srbminer.pid)])
+    def stopcfx(self):
+        self.gpustartbutton.config(command=lambda: threading.Thread(target=self.cfx).start(), background="#202020")
+        self.gpuframe.configure(style="TFrame")
+        self.gpustopbutton.config(command=None, bg="#720000", relief="sunken")
+        subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.lolminer.pid)])
         os.startfile("C:\\Program Files (x86)\\MSI Afterburner\\MSIAfterburner.exe")
         keyboard.press_and_release('alt+shift+F10')
         self.running -= 1
-        self.srbminerrunning = False
+        self.gpurunning = False
         if self.running == 0:
             self.fans(0, f"{self.fanprofiledefault}")
 
@@ -188,7 +243,7 @@ class MinerApp:
         time.sleep(0.1)
         keyboard.release("right")
         time.sleep(0.1)
-        if self.srbminerrunning:
+        if self.gpurunning:
             keyboard.press("down")
             time.sleep(0.1)
             keyboard.release("win+down")
